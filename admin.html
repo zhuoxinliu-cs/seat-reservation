@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图书馆座位预约系统 · 管理员端</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-body">
+
+<!-- ==================== 管理员登录 ==================== -->
+<div id="admin-login" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">CCNU</div>
+      <h1>图书馆座位预约系统</h1>
+      <p>管理员端</p>
+    </div>
+    <form id="admin-login-form" class="auth-form">
+      <label>管理员账号
+        <input type="text" id="admin-account" placeholder="请输入管理员账号" required>
+      </label>
+      <label>密码
+        <input type="password" id="admin-password" placeholder="请输入密码" required>
+      </label>
+      <button type="submit" class="btn-primary btn-block">登 录</button>
+      <p class="auth-tip">默认账号：admin　密码：admin123</p>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== 管理员主界面 ==================== -->
+<div id="admin-app" class="hidden">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="app-logo">
+        <span class="app-logo-icon">📚</span>
+        <div>
+          <div class="app-title">座位预约系统 · 管理后台</div>
+          <div class="app-sub">华中师范大学图书馆</div>
+        </div>
+      </div>
+      <div class="admin-header-right">
+        <span class="user-chip" id="admin-chip">管理员</span>
+        <button class="btn-ghost btn-sm" id="admin-logout">退出</button>
+        <a class="btn-ghost btn-sm" href="index.html" target="_blank">用户端 ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <aside class="admin-side">
+      <nav class="admin-nav">
+        <a data-admin="dashboard" class="admin-nav-item active">📊 数据看板</a>
+        <a data-admin="reservations" class="admin-nav-item">📋 预约管理</a>
+        <a data-admin="seats" class="admin-nav-item">🪑 座位管理</a>
+        <a data-admin="users" class="admin-nav-item">👥 用户管理</a>
+        <a data-admin="notices" class="admin-nav-item">📢 公告管理</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+
+      <!-- 数据看板 -->
+      <section id="admin-dashboard" class="admin-panel active">
+        <div class="page-head"><h2>数据看板</h2><p class="page-desc">今日预约与座位使用概况。</p></div>
+        <div class="stat-cards" id="dashboard-stats"></div>
+        <div class="admin-cols">
+          <div class="card panel-card">
+            <h3>座位利用率（按楼层）</h3>
+            <div id="util-bars" class="util-bars"></div>
+          </div>
+          <div class="card panel-card">
+            <h3>近 7 日预约量</h3>
+            <div id="trend-bars" class="trend-bars"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 预约管理 -->
+      <section id="admin-reservations" class="admin-panel">
+        <div class="page-head">
+          <h2>预约管理</h2>
+          <p class="page-desc">查看与处理全部预约。</p>
+        </div>
+        <div class="record-filters" id="admin-res-filters">
+          <button class="chip-filter active" data-filter="all">全部</button>
+          <button class="chip-filter" data-filter="待签到">待签到</button>
+          <button class="chip-filter" data-filter="履约中">履约中</button>
+          <button class="chip-filter" data-filter="暂离中">暂离中</button>
+          <button class="chip-filter" data-filter="已结束">已结束</button>
+          <button class="chip-filter" data-filter="违约">违约</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table" id="admin-res-table">
+            <thead>
+              <tr><th>日期</th><th>时段</th><th>用户</th><th>馆区</th><th>座位</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 座位管理 -->
+      <section id="admin-seats" class="admin-panel">
+        <div class="page-head"><h2>座位管理</h2><p class="page-desc">选择馆区与区域，管理座位启停。</p></div>
+        <div class="admin-selects">
+          <select id="adm-campus"></select>
+          <select id="adm-floor"></select>
+          <select id="adm-area"></select>
+          <button class="btn-primary btn-sm" id="adm-seat-refresh">刷新</button>
+        </div>
+        <div class="seat-legend">
+          <span><i class="dot dot-free"></i>启用 · 空闲</span>
+          <span><i class="dot dot-busy"></i>今日有约</span>
+          <span><i class="dot dot-off"></i>已停用</span>
+        </div>
+        <div class="seat-canvas admin-seat-canvas" id="admin-seat-canvas"></div>
+        <div class="seat-detail-card hidden" id="adm-seat-detail"></div>
+      </section>
+
+      <!-- 用户管理 -->
+      <section id="admin-users" class="admin-panel">
+        <div class="page-head"><h2>用户管理</h2><p class="page-desc">查看用户与违约记录；每月月初可一键清空上月全部违约。</p></div>
+        <div class="admin-selects" style="justify-content:flex-end">
+          <button class="btn-ghost btn-sm" id="adm-clear-all-violations">🧹 一键清空全部违约（每月月初）</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>姓名</th><th>学号</th><th>注册时间</th><th>违约次数</th><th>预约数</th><th>操作</th></tr></thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 公告管理 -->
+      <section id="admin-notices" class="admin-panel">
+        <div class="page-head"><h2>公告管理</h2><p class="page-desc">发布与删除用户端可见的通知公告。</p></div>
+        <div class="card panel-card">
+          <div class="notice-form">
+            <input type="text" id="adm-notice-title" placeholder="公告标题">
+            <textarea id="adm-notice-content" placeholder="公告内容"></textarea>
+            <button class="btn-primary" id="adm-notice-add">发布公告</button>
+          </div>
+        </div>
+        <div id="admin-notice-list"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- 违约明细弹窗 -->
+<div id="violation-modal" class="modal-mask hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="violation-modal-title">违约记录</h3>
+      <span class="modal-close" onclick="Admin.closeViolationModal()">×</span>
+    </div>
+    <div class="modal-body" id="violation-modal-body"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华中师范大学图书馆 · 座位预约系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==================== 登录 / 注册 ==================== -->
+<div id="auth-view" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">CCNU</div>
+      <h1>华中师范大学图书馆</h1>
+      <p>座位预约系统</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">登录</button>
+      <button class="auth-tab" data-tab="register">注册</button>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <label>学号 / 账号
+        <input type="text" id="login-account" placeholder="请输入学号" required>
+      </label>
+      <label>密码
+        <input type="password" id="login-password" placeholder="请输入密码" required>
+      </label>
+      <button type="submit" class="btn-primary btn-block">登 录</button>
+      <p class="auth-tip">新用户请先注册 · 注册后即可预约座位</p>
+    </form>
+
+    <form id="register-form" class="auth-form hidden">
+      <label>姓名
+        <input type="text" id="reg-name" placeholder="请输入姓名" required>
+      </label>
+      <label>学号
+        <input type="text" id="reg-studentid" placeholder="请输入学号" required>
+      </label>
+      <label>密码
+        <input type="password" id="reg-password" placeholder="设置密码（不少于 6 位）" required minlength="6">
+      </label>
+      <button type="submit" class="btn-primary btn-block">注 册</button>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== 主应用 ==================== -->
+<div id="app-view" class="hidden">
+
+  <!-- 顶部导航 -->
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo" onclick="App.showView('home')">
+        <span class="app-logo-icon">📚</span>
+        <div>
+          <div class="app-title">华中师范大学图书馆</div>
+          <div class="app-sub">座位预约系统 · <span id="campus-tag">主校区</span></div>
+        </div>
+      </div>
+
+      <nav class="app-nav">
+        <a data-view="home" class="nav-item active">预约选座</a>
+        <a data-view="records" class="nav-item">预约记录</a>
+        <a data-view="notices" class="nav-item">通知公告</a>
+        <a data-view="mine" class="nav-item">我的</a>
+      </nav>
+
+      <div class="app-user">
+        <span class="demo-clock" id="demo-clock-btn" title="演示时间（便于体验签到/违约流程）">⏱️ <span id="demo-clock-text">真实时间</span></span>
+        <span class="user-chip" id="user-chip">未登录</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ========== 视图：预约选座（大厅） ========== -->
+    <section id="view-home" class="view active">
+      <div class="page-head">
+        <h2>预约选座</h2>
+        <p class="page-desc">选择日期与馆区，查看座位分布并预约。</p>
+      </div>
+
+      <!-- 日期选择 -->
+      <div class="date-bar">
+        <div class="date-slots" id="date-slots"></div>
+        <div class="date-rule-tip" id="date-rule-tip"></div>
+      </div>
+
+      <!-- 校区切换 -->
+      <div class="campus-switch" id="campus-switch"></div>
+
+      <!-- 楼层与区域 -->
+      <div id="floor-area-wrap"></div>
+    </section>
+
+    <!-- ========== 视图：座位分布图 ========== -->
+    <section id="view-seatmap" class="view">
+      <div class="seatmap-head">
+        <button class="btn-ghost" id="seatmap-back">← 返回区域列表</button>
+        <div class="seatmap-title">
+          <h2 id="seatmap-area-name"></h2>
+          <p id="seatmap-date-info"></p>
+        </div>
+        <div class="seat-legend">
+          <span><i class="dot dot-free"></i>可预约</span>
+          <span><i class="dot dot-busy"></i>已预约</span>
+          <span><i class="dot dot-leave"></i>暂离中</span>
+          <span><i class="dot dot-off"></i>已停用</span>
+        </div>
+      </div>
+      <div class="seatmap-toolbar">
+        <span class="toolbar-tip">点击绿色座位可预约；先选座位，再选时间段</span>
+        <span id="seatmap-stats" class="toolbar-stats"></span>
+      </div>
+      <div class="seat-canvas" id="seat-canvas"></div>
+    </section>
+
+    <!-- ========== 视图：预约记录 ========== -->
+    <section id="view-records" class="view">
+      <div class="page-head">
+        <h2>预约记录</h2>
+        <p class="page-desc">查看历史预约、违约记录，以及签到 / 暂离 / 结束预约等操作。</p>
+      </div>
+      <div class="record-filters">
+        <button class="chip-filter active" data-filter="all">全部</button>
+        <button class="chip-filter" data-filter="待签到">待签到</button>
+        <button class="chip-filter" data-filter="履约中">履约中</button>
+        <button class="chip-filter" data-filter="暂离中">暂离中</button>
+        <button class="chip-filter" data-filter="已结束">已结束</button>
+        <button class="chip-filter" data-filter="违约">违约</button>
+        <button class="chip-filter" data-filter="已撤销">已撤销</button>
+      </div>
+      <div id="record-list" class="record-list"></div>
+    </section>
+
+    <!-- ========== 视图：通知公告 ========== -->
+    <section id="view-notices" class="view">
+      <div class="page-head">
+        <h2>通知公告</h2>
+        <p class="page-desc">图书馆座位预约相关规则与通知。</p>
+      </div>
+      <div id="notice-list" class="notice-list"></div>
+    </section>
+
+    <!-- ========== 视图：我的 ========== -->
+    <section id="view-mine" class="view">
+      <div class="page-head">
+        <h2>我的</h2>
+      </div>
+      <div class="mine-card">
+        <div class="mine-avatar" id="mine-avatar">刘</div>
+        <div class="mine-info">
+          <div class="mine-name" id="mine-name"></div>
+          <div class="mine-id" id="mine-studentid"></div>
+        </div>
+      </div>
+      <div class="mine-stats">
+        <div class="stat-box"><div class="stat-num" id="mine-total"></div><div class="stat-label">总预约</div></div>
+        <div class="stat-box"><div class="stat-num" id="mine-violations"></div><div class="stat-label">违约次数</div></div>
+        <div class="stat-box"><div class="stat-num" id="mine-active"></div><div class="stat-label">履约中</div></div>
+      </div>
+      <div class="mine-menu">
+        <div class="mine-item" onclick="App.showView('records')"><span>📋</span> 我的预约记录 <b>›</b></div>
+        <div class="mine-item" onclick="App.showView('notices')"><span>📢</span> 通知公告 <b>›</b></div>
+        <div class="mine-item" id="mine-about"><span>ℹ️</span> 使用规则说明 <b>›</b></div>
+        <div class="mine-item" id="mine-reset"><span>🧹</span> 清空本机演示数据 <b>›</b></div>
+      </div>
+      <button class="btn-danger btn-block" id="logout-btn">退出登录</button>
+    </section>
+  </main>
+
+  <!-- 底部移动端导航 -->
+  <nav class="app-tabbar">
+    <a data-view="home" class="tab-item active"><span>🪑</span>选座</a>
+    <a data-view="records" class="tab-item"><span>📋</span>记录</a>
+    <a data-view="notices" class="tab-item"><span>📢</span>公告</a>
+    <a data-view="mine" class="tab-item"><span>👤</span>我的</a>
+  </nav>
+</div>
+
+<!-- ==================== 预约弹窗 ==================== -->
+<div id="reserve-modal" class="modal-mask hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>座位预约</h3>
+      <span class="modal-close" onclick="App.closeReserveModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="reserve-seat-info">
+        <span class="reserve-seat-id" id="rseat-id"></span>
+        <span class="reserve-seat-loc" id="rseat-loc"></span>
+      </div>
+      <div class="time-axis" id="time-axis"></div>
+      <div class="time-pickers">
+        <div class="time-pick">
+          <label>开始时间</label>
+          <select id="r-start"></select>
+        </div>
+        <div class="time-pick">
+          <label>结束时间</label>
+          <select id="r-end"></select>
+        </div>
+      </div>
+      <p class="time-rule-tip">绿色为可预约时段；红色为该座位已被预约的时段。结束时间需晚于开始时间。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="App.closeReserveModal()">取消</button>
+      <button class="btn-primary" id="r-confirm" onclick="App.confirmReserve()">确认预约</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 预约成功弹窗 ==================== -->
+<div id="success-modal" class="modal-mask hidden">
+  <div class="modal-card success-card">
+    <div class="success-head">
+      <div class="success-icon">✅</div>
+      <h3>预约成功</h3>
+      <button class="modal-close" onclick="App.closeSuccessModal()">×</button>
+    </div>
+    <div class="success-body">
+      <div class="success-seat">
+        <span id="s-seat-id"></span>
+        <span id="s-seat-loc"></span>
+      </div>
+      <div class="success-time" id="s-time"></div>
+      <div class="success-signin-tip">
+        <div class="tip-title">📌 签到提醒</div>
+        <p id="s-signin-text"></p>
+      </div>
+      <div class="success-weather" id="s-weather"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-primary btn-block" onclick="App.closeSuccessModal()">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 预约详情弹窗 ==================== -->
+<div id="detail-modal" class="modal-mask hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>预约详情</h3>
+      <span class="modal-close" onclick="App.closeDetailModal()">×</span>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot" id="detail-actions"></div>
+  </div>
+</div>
+
+<!-- ==================== 使用规则说明弹窗 ==================== -->
+<div id="about-modal" class="modal-mask hidden">
+  <div class="modal-card about-card">
+    <div class="modal-head">
+      <h3>座位预约使用规则</h3>
+      <span class="modal-close" onclick="App.closeAboutModal()">×</span>
+    </div>
+    <div class="modal-body about-body" id="about-body"></div>
+    <div class="modal-foot">
+      <button class="btn-primary btn-block" onclick="App.closeAboutModal()">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 演示时间弹窗 ==================== -->
+<div id="demo-modal" class="modal-mask hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>演示时间</h3>
+      <span class="modal-close" onclick="App.closeDemoModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <p class="demo-tip">此功能用于演示完整流程（签到 / 暂离 / 违约 / 结束），仅本地生效。关闭后恢复真实时间。</p>
+      <label>模拟当前时间
+        <input type="datetime-local" id="demo-time-input">
+      </label>
+      <div class="demo-quick">
+        <button class="btn-ghost" onclick="App.setDemoQuick(0)">现在</button>
+        <button class="btn-ghost" onclick="App.setDemoQuick(30)">+30分钟</button>
+        <button class="btn-ghost" onclick="App.setDemoQuick(60)">+1小时</button>
+        <button class="btn-ghost" onclick="App.setDemoQuick(120)">+2小时</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="App.setDemoOff()">关闭演示时间</button>
+      <button class="btn-primary" onclick="App.applyDemoTime()">应用</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
